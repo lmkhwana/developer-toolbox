@@ -57,3 +57,4 @@ A VS Code extension providing a suite of developer tools.
 ## Contact
 
 For any issues or inquiries, please open an issue on the [GitHub repository](https://github.com/lmkhwana/developer-toolbox/issues).
+
