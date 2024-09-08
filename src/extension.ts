@@ -1,83 +1,140 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as yaml from 'js-yaml'; // Add this for YAML support
+import * as xml2js from 'xml2js'; // Add this for XML support
+
 
 // Function to get the HTML content with embedded CSS and JS
 function getApiTesterHtml(extensionPath: string): string {
-  // Embed CSS and JS directly into HTML
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Live API Tester</title>
-      <style>
-        ${fs.readFileSync(path.join(extensionPath, 'src/media', 'api-tester.css'), 'utf8')}
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h2>Live API Tester</h2>
-        <form id="apiForm">
-          <label for="url">API URL</label>
-          <input type="text" id="url" placeholder="https://api.example.com/endpoint" required />
-
-          <label for="method">HTTP Method</label>
-          <select id="method">
-            <option value="GET">GET</option>
-            <option value="POST">POST</option>
-            <option value="PUT">PUT</option>
-            <option value="DELETE">DELETE</option>
-          </select>
-
-          <label for="headers">Headers (JSON)</label>
-          <textarea id="headers" placeholder='{"Content-Type": "application/json"}'></textarea>
-
-          <label for="body">Body (JSON for POST/PUT)</label>
-          <textarea id="body" placeholder='{"key": "value"}'></textarea>
-
-          <button type="submit">Send Request</button>
-        </form>
-
-        <div class="loader" id="loader"></div>
-        <div class="response-container" id="responseContainer">
-          <h3>Response:</h3>
-          <pre id="response"></pre>
-        </div>
-      </div>
-      <script>
-        ${fs.readFileSync(path.join(extensionPath, 'src/media', 'api-tester.js'), 'utf8')}
-      </script>
-    </body>
-    </html>
-  `;
+  return fs.readFileSync(path.join(extensionPath, 'src/webviews', 'api-tester.html'), 'utf8');
 }
 
-export function activate(context: vscode.ExtensionContext) {
-  // Register the command to open the Live API Tester webview
-  context.subscriptions.push(
-    vscode.commands.registerCommand('developer-toolbox.showApiTester', () => {
-      const panel = vscode.window.createWebviewPanel(
-        'apiTester',
-        'Live API Tester',
-        vscode.ViewColumn.One,
-        { 
-          enableScripts: true,
-          localResourceRoots: [
-            vscode.Uri.file(path.join(context.extensionPath, 'src/media')),
-            vscode.Uri.file(path.join(context.extensionPath, 'src/webviews'))
-          ]
-        }
-      );
+function getJsonYamlFormatterHtml(extensionPath: string): string {
+  return fs.readFileSync(path.join(extensionPath, 'src/webviews', 'json-yaml-formatter.html'), 'utf8');
+}
 
-      panel.webview.html = getApiTesterHtml(context.extensionPath);
-    })
-  );
+async function formatInput(panel: vscode.WebviewPanel, inputText: string, inputFormat: string) {
+  try {
+    let formattedText;
+    if (inputFormat === 'json') {
+      formattedText = JSON.stringify(JSON.parse(inputText), null, 2);
+    } else if (inputFormat === 'yaml') {
+      formattedText = yaml.dump(yaml.load(inputText), { indent: 2 });
+    }
+    panel.webview.postMessage({ command: 'updateOutput', outputText: formattedText });
+  } catch (error) {
+    panel.webview.postMessage({ command: 'updateOutput', outputText: 'Formatting error: '});
+  }
+}
+
+async function validateInput(panel: vscode.WebviewPanel, inputText: string, inputFormat: string) {
+  try {
+    if (inputFormat === 'json') {
+      JSON.parse(inputText);
+      panel.webview.postMessage({ command: 'updateOutput', outputText: 'Valid JSON' });
+    } else if (inputFormat === 'yaml') {
+      yaml.load(inputText);
+      panel.webview.postMessage({ command: 'updateOutput', outputText: 'Valid YAML' });
+    }
+  } catch (error) {
+    panel.webview.postMessage({ command: 'updateOutput', outputText: 'Validation error: '});
+  }
+}
+
+async function convertJsonToXml(panel: vscode.WebviewPanel, inputText: string) {
+  try {
+    const json = JSON.parse(inputText);
+    const builder = new xml2js.Builder();
+    const xml = builder.buildObject(json);
+    panel.webview.postMessage({ command: 'updateOutput', outputText: xml });
+  } catch (error) {
+    panel.webview.postMessage({ command: 'updateOutput', outputText: 'Conversion error: '});
+  }
+}
+
+async function convertXmlToJson(panel: vscode.WebviewPanel, inputText: string) {
+  try {
+    const parser = new xml2js.Parser();
+    parser.parseString(inputText, (err, result) => {
+      if (err) {
+        panel.webview.postMessage({ command: 'updateOutput', outputText: 'Conversion error: ' + err.message });
+      } else {
+        panel.webview.postMessage({ command: 'updateOutput', outputText: JSON.stringify(result, null, 2) });
+      }
+    });
+  } catch (error) {
+    panel.webview.postMessage({ command: 'updateOutput', outputText: 'Conversion error: '});
+  }
+}
+
+
+export function activate(context: vscode.ExtensionContext) {
+  // Register the command to open the JSON/YAML Formatter
+  let disposable = vscode.commands.registerCommand('developer-toolbox.showJsonYamlFormatter', () => {
+    const panel = vscode.window.createWebviewPanel(
+      'jsonYamlFormatter',
+      'JSON/YAML Formatter and Validator',
+      vscode.ViewColumn.One,
+      { 
+        enableScripts: true,
+        localResourceRoots: [
+          vscode.Uri.file(path.join(context.extensionPath, 'src/media')),
+          vscode.Uri.file(path.join(context.extensionPath, 'src/webviews'))
+        ]
+      }
+    );
+
+    panel.webview.html = getJsonYamlFormatterHtml(context.extensionPath);
+
+    panel.webview.onDidReceiveMessage(
+      async message => {
+        const { command, inputText, inputFormat } = message;
+
+        switch (command) {
+          case 'format':
+            await formatInput(panel, inputText, inputFormat);
+            break;
+          case 'validate':
+            await validateInput(panel, inputText, inputFormat);
+            break;
+          case 'jsonToXml':
+            await convertJsonToXml(panel, inputText);
+            break;
+          case 'xmlToJson':
+            await convertXmlToJson(panel, inputText);
+            break;
+        }
+      },
+      undefined,
+      context.subscriptions
+    );
+  });
+
+
+  // Register the command to open the API Tester webview
+  let apiTesterCommand = vscode.commands.registerCommand('developer-toolbox.showApiTester', () => {
+    const panel = vscode.window.createWebviewPanel(
+      'apiTester',
+      'Live API Tester',
+      vscode.ViewColumn.One,
+      { 
+        enableScripts: true,
+        localResourceRoots: [
+          vscode.Uri.file(path.join(context.extensionPath, 'src/media')),
+          vscode.Uri.file(path.join(context.extensionPath, 'src/webviews'))
+        ]
+      }
+    );
+
+    panel.webview.html = getApiTesterHtml(context.extensionPath);
+  });
 
   // Register the tree data provider for the Developer Toolbox
   const treeDataProvider = new MyTreeDataProvider();
   vscode.window.registerTreeDataProvider('toolboxView', treeDataProvider);
+
+  context.subscriptions.push(disposable, apiTesterCommand);
 }
 
 class MyTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
@@ -90,13 +147,19 @@ class MyTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
 
   getChildren(element?: vscode.TreeItem): vscode.ProviderResult<vscode.TreeItem[]> {
     if (element === undefined) {
-      const apiTesterItem = new vscode.TreeItem("API Tester", vscode.TreeItemCollapsibleState.None);
+      const apiTesterItem = new vscode.TreeItem("Live API Tester", vscode.TreeItemCollapsibleState.None);
       apiTesterItem.command = {
         command: 'developer-toolbox.showApiTester',
         title: 'Open API Tester'
       };
 
-      return [apiTesterItem];
+      const jsonYamlFormatterItem = new vscode.TreeItem("JSON/XML Formatter", vscode.TreeItemCollapsibleState.None);
+      jsonYamlFormatterItem.command = {
+        command: 'developer-toolbox.showJsonYamlFormatter',
+        title: 'Open JSON/YAML Formatter'
+      };
+
+      return [apiTesterItem, jsonYamlFormatterItem];
     }
     return [];
   }
