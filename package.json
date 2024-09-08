@@ -32,10 +32,10 @@
   },
   "views": {
    "developer-toolbox": [
-      {
-        "id": "apiTesterView",
-        "name": "API Tester"
-      }
+    {
+      "id": "toolboxView",
+      "name": "Toolbox View"
+    }
     ]
   }
   },

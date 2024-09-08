@@ -1,4 +1,58 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+
+// Function to get the HTML content with embedded CSS and JS
+function getApiTesterHtml(extensionPath: string): string {
+  // Embed CSS and JS directly into HTML
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Live API Tester</title>
+      <style>
+        ${fs.readFileSync(path.join(extensionPath, 'src/media', 'api-tester.css'), 'utf8')}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h2>Live API Tester</h2>
+        <form id="apiForm">
+          <label for="url">API URL</label>
+          <input type="text" id="url" placeholder="https://api.example.com/endpoint" required />
+
+          <label for="method">HTTP Method</label>
+          <select id="method">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+
+          <label for="headers">Headers (JSON)</label>
+          <textarea id="headers" placeholder='{"Content-Type": "application/json"}'></textarea>
+
+          <label for="body">Body (JSON for POST/PUT)</label>
+          <textarea id="body" placeholder='{"key": "value"}'></textarea>
+
+          <button type="submit">Send Request</button>
+        </form>
+
+        <div class="loader" id="loader"></div>
+        <div class="response-container" id="responseContainer">
+          <h3>Response:</h3>
+          <pre id="response"></pre>
+        </div>
+      </div>
+      <script>
+        ${fs.readFileSync(path.join(extensionPath, 'src/media', 'api-tester.js'), 'utf8')}
+      </script>
+    </body>
+    </html>
+  `;
+}
 
 export function activate(context: vscode.ExtensionContext) {
   // Register the command to open the Live API Tester webview
@@ -8,10 +62,16 @@ export function activate(context: vscode.ExtensionContext) {
         'apiTester',
         'Live API Tester',
         vscode.ViewColumn.One,
-        { enableScripts: true }
+        { 
+          enableScripts: true,
+          localResourceRoots: [
+            vscode.Uri.file(path.join(context.extensionPath, 'src/media')),
+            vscode.Uri.file(path.join(context.extensionPath, 'src/webviews'))
+          ]
+        }
       );
 
-      panel.webview.html = getApiTesterHtml();
+      panel.webview.html = getApiTesterHtml(context.extensionPath);
     })
   );
 
@@ -20,89 +80,26 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.window.registerTreeDataProvider('toolboxView', treeDataProvider);
 }
 
-// HTML for the API Tester Webview
-function getApiTesterHtml() {
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Live API Tester</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; }
-        label { margin-bottom: 5px; display: block; }
-        input, select, textarea { width: 100%; margin-bottom: 10px; padding: 8px; font-size: 14px; }
-        button { padding: 10px 15px; background-color: #007ACC; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #005B9E; }
-        pre { background-color: #f5f5f5; padding: 10px; }
-      </style>
-    </head>
-    <body>
-      <h2>Live API Tester</h2>
-      <form id="apiForm">
-        <label for="url">API URL</label>
-        <input type="text" id="url" placeholder="https://api.example.com/endpoint" required />
-        
-        <label for="method">HTTP Method</label>
-        <select id="method">
-          <option value="GET">GET</option>
-          <option value="POST">POST</option>
-          <option value="PUT">PUT</option>
-          <option value="DELETE">DELETE</option>
-        </select>
-        
-        <label for="headers">Headers (JSON)</label>
-        <textarea id="headers" placeholder='{"Content-Type": "application/json"}'></textarea>
-        
-        <label for="body">Body (JSON for POST/PUT)</label>
-        <textarea id="body" placeholder='{"key": "value"}'></textarea>
-        
-        <button type="submit">Send Request</button>
-      </form>
-      
-      <h3>Response:</h3>
-      <pre id="response"></pre>
-
-      <script>
-        const vscode = acquireVsCodeApi();
-
-        document.getElementById('apiForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-
-          const url = document.getElementById('url').value;
-          const method = document.getElementById('method').value;
-          const headers = document.getElementById('headers').value;
-          const body = document.getElementById('body').value;
-
-          const options = {
-            method,
-            headers: headers ? JSON.parse(headers) : {},
-            body: body && (method === 'POST' || method === 'PUT') ? body : null
-          };
-
-          try {
-            const response = await fetch(url, options);
-            const text = await response.text();
-            document.getElementById('response').textContent = text;
-          } catch (error) {
-            document.getElementById('response').textContent = 'Error: ' + error.message;
-          }
-        });
-      </script>
-    </body>
-    </html>`;
-}
-
-// Tree View Data Provider
 class MyTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+  private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined> = new vscode.EventEmitter<vscode.TreeItem | undefined>();
+  readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined> = this._onDidChangeTreeData.event;
+
   getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
     return element;
   }
 
   getChildren(element?: vscode.TreeItem): vscode.ProviderResult<vscode.TreeItem[]> {
-    return [new vscode.TreeItem("Tool 1"), new vscode.TreeItem("Tool 2")];
+    if (element === undefined) {
+      const apiTesterItem = new vscode.TreeItem("API Tester", vscode.TreeItemCollapsibleState.None);
+      apiTesterItem.command = {
+        command: 'developer-toolbox.showApiTester',
+        title: 'Open API Tester'
+      };
+
+      return [apiTesterItem];
+    }
+    return [];
   }
 }
 
-export function deactivate() {}
+export function deactivate() { }
