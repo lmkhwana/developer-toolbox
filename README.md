@@ -5,13 +5,13 @@ A VS Code extension providing a suite of developer tools.
 ## Micro Tools Included
 
 - **Live API Tester**: A webview panel that allows you to send HTTP requests and view responses directly within VS Code.
-- More feature to come...
+- **JSON/XML Formatter and Validator**: Quickly format, validate, and convert JSON or XML files with a user-friendly interface.
 
 ## Installation
 
 1. **Clone the Repository**:
     ```sh
-    git clone https://github.com/your-username/developer-toolbox.git
+    git clone https://github.com/lmkhwana/developer-toolbox.git
     ```
 2. **Navigate to the Extension Directory**:
     ```sh
@@ -27,7 +27,9 @@ A VS Code extension providing a suite of developer tools.
     ```
 
 ## Usage
-**Microtool - API Tester**
+
+### Microtool - API Tester
+
 1. **Open the Command Palette** (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS).
 2. **Search for `Developer Toolbox: Show API Tester`** and select it.
 
@@ -37,6 +39,18 @@ A VS Code extension providing a suite of developer tools.
    - Select the HTTP method (GET, POST, PUT, DELETE).
    - Provide request headers and body if needed.
    - Send the request and view the response.
+
+### Microtool - JSON/YAML Formatter and Validator
+
+1. **Open the Command Palette** (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS).
+2. **Search for `Developer Toolbox: Show JSON/XML Formatter`** and select it.
+
+   This will open the JSON/YAML Formatter and Validator tool where you can:
+
+   - Choose between JSON and XML formats.
+   - Enter your JSON or XML data in the input box.
+   - Format the data, validate it, or convert between JSON and XML formats.
+   - View the results in a resizable output box, which will only display content when there is output.
 
 ## Development
 
@@ -58,3 +72,6 @@ A VS Code extension providing a suite of developer tools.
 
 For any issues or inquiries, please open an issue on the [GitHub repository](https://github.com/lmkhwana/developer-toolbox/issues).
 
+---
+
+Feel free to adjust any sections or add additional details as needed.
