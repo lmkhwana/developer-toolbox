@@ -28,7 +28,7 @@ A VS Code extension providing a suite of developer tools.
 
 ## Usage
 
-### Microtool - API Tester
+### Microtool - Live API Tester
 
 1. **Open the Command Palette** (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS).
 2. **Search for `Developer Toolbox: Show API Tester`** and select it.
@@ -39,6 +39,9 @@ A VS Code extension providing a suite of developer tools.
    - Select the HTTP method (GET, POST, PUT, DELETE).
    - Provide request headers and body if needed.
    - Send the request and view the response.
+
+  ![image](https://github.com/user-attachments/assets/db43afa0-ff04-4ff7-991c-1a1724cdc0c8)
+
 
 ### Microtool - JSON/YAML Formatter and Validator
 
@@ -51,6 +54,7 @@ A VS Code extension providing a suite of developer tools.
    - Enter your JSON or XML data in the input box.
    - Format the data, validate it, or convert between JSON and XML formats.
    - View the results in a resizable output box, which will only display content when there is output.
+     
   ![image](https://github.com/user-attachments/assets/0ec01f75-68e3-41ed-896b-f8e6ee4fd1f8)
 
 
