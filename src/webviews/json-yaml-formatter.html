@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON/YAML Formatter and Validator</title>
+  <style>
+    /* Embedded CSS */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--vscode-editor-background);
+      color: var(--vscode-editor-foreground);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      background: var(--vscode-editor-background);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 2px 2px 4px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 20px;
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      margin-top: 5px;
+      padding: 10px;
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 4px;
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      box-sizing: border-box;
+      resize: vertical;
+      /* Make the textareas resizable */
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      flex: 1;
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      padding: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--vscode-button-hoverBackground);
+    }
+
+    .response-container {
+      margin-top: 20px;
+      display: none;
+      /* Hide initially */
+    }
+
+    .loader {
+      display: none;
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--vscode-spinner-background);
+      border-top: 3px solid var(--vscode-spinner-foreground);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    #outputText {
+      min-height: 200px;
+    }
+
+    #inputText {
+      min-height: 200px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>JSON/XML Formatter and Validator</h2>
+    <form id="jsonYamlForm">
+      <label for="inputFormat">Input Format</label>
+      <select id="inputFormat">
+        <option value="json">JSON</option>
+        <option value="xml">XML</option>
+      </select>
+
+      <label for="inputText">Input</label>
+      <textarea id="inputText" placeholder="Enter JSON or XML here..."></textarea>
+
+      <div class="button-container">
+        <button type="button" id="formatButton">Format</button>
+        <button type="button" id="validateButton">Validate</button>
+        <button type="button" id="jsonToXmlButton">JSON to XML</button>
+        <button type="button" id="xmlToJsonButton">XML to JSON</button>
+      </div>
+
+      <div class="loader" id="loader"></div>
+
+      <div class="response-container" id="responseContainer">
+        <label for="outputText">Output</label>
+        <textarea id="outputText" readonly></textarea>
+      </div>
+    </form>
+  </div>
+  <script>
+    // Embedded JS
+    const vscode = acquireVsCodeApi();
+
+    document.getElementById('formatButton').addEventListener('click', () => {
+      const inputText = document.getElementById('inputText').value;
+      const inputFormat = document.getElementById('inputFormat').value;
+      vscode.postMessage({ command: 'format', inputText, inputFormat });
+    });
+
+    document.getElementById('validateButton').addEventListener('click', () => {
+      const inputText = document.getElementById('inputText').value;
+      const inputFormat = document.getElementById('inputFormat').value;
+      vscode.postMessage({ command: 'validate', inputText, inputFormat });
+    });
+
+    document.getElementById('jsonToXmlButton').addEventListener('click', () => {
+      const inputText = document.getElementById('inputText').value;
+      vscode.postMessage({ command: 'jsonToXml', inputText });
+    });
+
+    document.getElementById('xmlToJsonButton').addEventListener('click', () => {
+      const inputText = document.getElementById('inputText').value;
+      vscode.postMessage({ command: 'xmlToJson', inputText });
+    });
+
+    window.addEventListener('message', event => {
+      const message = event.data;
+      if (message.command === 'updateOutput') {
+        const responseContainer = document.getElementById('responseContainer');
+        const outputText = document.getElementById('outputText');
+
+        if (message.outputText) {
+          outputText.value = message.outputText;
+          responseContainer.style.display = 'block';
+        } else {
+          responseContainer.style.display = 'none';
+        }
+
+        document.getElementById('loader').style.display = 'none';
+      }
+    });
+
+    window.addEventListener('load', () => {
+      document.getElementById('loader').style.display = 'none';
+    });
+  </script>
+</body>
+
+</html>
