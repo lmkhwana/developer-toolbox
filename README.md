@@ -1,11 +1,11 @@
 # Developer Toolbox
 
-A VS Code extension providing a suite of developer tools, including a live API tester.
+A VS Code extension providing a suite of developer tools.
 
-## Features
+## Micro Tools Included
 
 - **Live API Tester**: A webview panel that allows you to send HTTP requests and view responses directly within VS Code.
-- Moew 
+- More feature to come...
 
 ## Installation
 
@@ -27,7 +27,7 @@ A VS Code extension providing a suite of developer tools, including a live API t
     ```
 
 ## Usage
-
+**Microtool - API Tester**
 1. **Open the Command Palette** (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS).
 2. **Search for `Developer Toolbox: Show API Tester`** and select it.
 
@@ -47,33 +47,13 @@ A VS Code extension providing a suite of developer tools, including a live API t
 
 2. **Debugging**:
     Set breakpoints in your code and use the debugging tools in VS Code to troubleshoot your extension.
-
-### Packaging and Publishing
-
-1. **Install vsce** (Visual Studio Code Extension Manager):
-    ```sh
-    npm install -g vsce
-    ```
-
-2. **Package the Extension**:
-    ```sh
-    vsce package
-    ```
-
-3. **Publish the Extension**:
-    Follow the [official publishing instructions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) to publish your extension to the VS Code Marketplace.
-
+   
 ## Contributing
 
 1. **Fork the Repository** and create a new branch for your feature or bug fix.
 2. **Make Your Changes** and ensure that all tests pass.
 3. **Submit a Pull Request** with a clear description of your changes.
 
-## License
-
-This extension is licensed under the [MIT License](LICENSE).
-
 ## Contact
 
 For any issues or inquiries, please open an issue on the [GitHub repository](https://github.com/lmkhwana/developer-toolbox/issues).
-
