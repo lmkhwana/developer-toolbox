@@ -51,6 +51,8 @@ A VS Code extension providing a suite of developer tools.
    - Enter your JSON or XML data in the input box.
    - Format the data, validate it, or convert between JSON and XML formats.
    - View the results in a resizable output box, which will only display content when there is output.
+  ![image](https://github.com/user-attachments/assets/0ec01f75-68e3-41ed-896b-f8e6ee4fd1f8)
+
 
 ## Development
 
